@@ -76,8 +76,6 @@ modded class MissionServer
 	autoptr TIntArray infectedMediumNumber = { 5, 10, 15 };
 	autoptr TIntArray infectedLowNumber = {20, 20, 40};
 
-	bool once;
-	bool once2;
 	
 	override void OnInit()
 	{
@@ -89,7 +87,6 @@ modded class MissionServer
 	override void TickScheduler(float timeSplice)
 	{
 		super.TickScheduler(timeslice);
-		//RPC_MESSAGE("0");
 		playersUpdateCount += timeslice * 10000;
 		if (playersUpdateCount >= playersUpdateDelay)
 		{
@@ -101,7 +98,6 @@ modded class MissionServer
 		checkStaticHordeDistanceCount += timeslice * 1000 * playerCount;
 		if (checkStaticHordeDistanceCount > checkStaticHordeDistanceDelay)
 		{
-			//RPC_MESSAGE("00");
 			checkStaticHordeDistanceCount = 0;				
 
 			currentPlayerCheckedStaticHorde++;
@@ -133,94 +129,49 @@ modded class MissionServer
 			if (hordeSpawned[i] == false)
 			{
 				if (distX < infectedZoneRadius[i] * activationDistanceRatio && distZ < infectedZoneRadius[i] * activationDistanceRatio)
-				{
-					//RPC_MESSAGE("01");
-					//if (once == false)
-					{
-						once = true;
-						Print("hordeSpawned : " + i.ToString());
-						
-						Print("coordCheck : " + coordCheck.ToString());
-						Print("thePosPlayer : " + thePosPlayer.ToString());
-						Print("distX : " + distX.ToString());
-						Print("distZ : " + distZ.ToString());
-						Print("Radius : " + (infectedZoneRadius[i] * activationDistanceRatio).ToString());
-						
-						SpawnGroupe (coordCheck, infectedTypeHight, infectedHightNumber[i], infectedZoneRadius[i], hightRadiusRation);
-						SpawnGroupe (coordCheck, infectedTypeMedium, infectedMediumNumber[i], infectedZoneRadius[i], mediumRadiusRatio);
-						SpawnGroupe (coordCheck, infectedTypeLow, infectedLowNumber[i], infectedZoneRadius[i], 1);
-						hordeSpawned[i] = true;
-						Print("zombieCurrentNumber : " + zombieCurrentNumber.ToString());
-
-						break;
-					}
+				{					
+					SpawnGroupe (coordCheck, infectedTypeHight, infectedHightNumber[i], infectedZoneRadius[i], hightRadiusRation);
+					SpawnGroupe (coordCheck, infectedTypeMedium, infectedMediumNumber[i], infectedZoneRadius[i], mediumRadiusRatio);
+					SpawnGroupe (coordCheck, infectedTypeLow, infectedLowNumber[i], infectedZoneRadius[i], 1);
+					hordeSpawned[i] = true;
+					RPC_MESSAGE("Static Horde Spawned : " + (infectedHightNumber[i] + infectedMediumNumber[i] + infectedLowNumber[i]).ToString());
+					RPC_MESSAGE("zombieCurrentNumber : " + zombieCurrentNumber.ToString());
+					break;
 				}	
 			}
 			else if (hordeSpawned[i] == true)
-			{
-				//if (once2 == false)
+			{								
+				bool readyToRespawn = true;
+				for (int j = 0; j < playerCount; ++j)
 				{
-					once2 = true;			
-							
-					bool readyToRespawn = true;
-					for (int j = 0; j < playerCount; ++j)
+					thePlayer2 = PlayerBase.Cast(players.Get(j));
+					if (thePlayer2)
 					{
-						thePlayer2 = PlayerBase.Cast(players.Get(j));
-						if (thePlayer2)
+						posPlayer2 = thePlayer2.GetPosition();
+						vector coordCheck2 = {infectedZoneCoordX[i],0,infectedZoneCoordZ[i]};
+						float distX2 = Math.AbsFloat(coordCheck2[0] - posPlayer2[0]);
+						float distZ2 = Math.AbsFloat(coordCheck2[2] - posPlayer2[2]);						
+											
+						if (distX2 < infectedZoneRadius[i] * desactivationDistanceRatio && distZ2 < infectedZoneRadius[i] * desactivationDistanceRatio)
 						{
-							posPlayer2 = thePlayer2.GetPosition();
-							vector coordCheck2 = {infectedZoneCoordX[i],0,infectedZoneCoordZ[i]};
-							float distX2 = Math.AbsFloat(coordCheck2[0] - posPlayer2[0]);
-							float distZ2 = Math.AbsFloat(coordCheck2[2] - posPlayer2[2]);
-							
-							
-							//float distRespawn = data_Horde[10] * spawnDistanceFactor * staticHordeReactivationFactor;
-							
-							if (distX2 < infectedZoneRadius[i] * desactivationDistanceRatio && distZ2 < infectedZoneRadius[i] * desactivationDistanceRatio)
-							//if (num03 < distRespawn && num04 < distRespawn)
-							{
-								Print("hordeDesSpawned : " + i.ToString());
-					
-								Print("coordCheck2 : " + coordCheck2.ToString());
-								Print("posPlayer2 : " + posPlayer2.ToString());
-								Print("distX2 : " + distX2.ToString());
-								Print("distZ2 : " + distZ2.ToString());
-								Print("Radius : " + (infectedZoneRadius[i] * desactivationDistanceRatio).ToString());
-								readyToRespawn = false;
-								//break;
-							}
-							else
-							{
-								Print("hordeDesSpawnedBug : " + i.ToString());
-					
-								Print("coordCheck2 : " + coordCheck2.ToString());
-								Print("posPlayer2 : " + posPlayer2.ToString());
-								Print("distX2 : " + distX2.ToString());
-								Print("distZ2 : " + distZ2.ToString());
-								Print("Radius : " + (infectedZoneRadius[i] * desactivationDistanceRatio).ToString());
-							}
+							readyToRespawn = false;
+							break;
 						}
 					}
-					if (readyToRespawn == true)
-					{			
-						Print("Readyto spawn");
-				
-						hordeSpawned[i] = false;
-						RPC_MESSAGE("Static Horde Ready to Spawn again");
-					}
-					
-					
-					
 				}
+				if (readyToRespawn == true)
+				{						
+					hordeSpawned[i] = false;
+					RPC_MESSAGE("Static Horde Ready to Spawn again");
+				}				
 			}
 		}
 	}
 
 	void SpawnGroupe(vector theInfectedZoneCoord, TStringArray in_infectedType, int in2_infectedNumber, int in2_infectedZoneRadius, float in_InteriorRadiusRation)
 	{
-		for (int k = 0; k < in2_infectedNumber - 1; k++)
+		for (int k = 0; k < in2_infectedNumber; k++)
 		{
-			//RPC_MESSAGE("02");
 			zombieTypeToSpawn = ChooseZombiesType(in_infectedType);
 			zombiePositionToSpawn = ChoosePositionZombie(theInfectedZoneCoord, in2_infectedZoneRadius * in_InteriorRadiusRation);			
 			SpawnZombie(zombieTypeToSpawn, zombiePositionToSpawn);
@@ -231,7 +182,6 @@ modded class MissionServer
 
 	vector ChoosePositionZombie(vector the_Zone_Position, int the_spawned_Size)
 	{
-		//RPC_MESSAGE("03");
 		vector thePosition = the_Zone_Position;
 		float decalX = Math.RandomFloatInclusive(-the_spawned_Size, the_spawned_Size);
 		float decalZ = Math.RandomFloatInclusive(-the_spawned_Size, the_spawned_Size);
@@ -243,7 +193,6 @@ modded class MissionServer
 
 	string ChooseZombiesType(TStringArray in2_infectedType)
 	{
-		//RPC_MESSAGE("04");
 		int rand = Math.RandomInt(0, in2_infectedType.Count() - 1)	
 		return in2_infectedType[rand];
 	}	
@@ -251,7 +200,6 @@ modded class MissionServer
 	
 	void SpawnZombie(string theZombieTypeToSpawn, vector theZombiePositionToSpawn)
 	{
-		//RPC_MESSAGE("05");
 		EntityAI zombie = GetGame().CreateObject(zombieTypeToSpawn, theZombiePositionToSpawn, false, true);
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(PvzRemoveZombie.CheckRemoveZombie, despawnDelayCheckDistance + Math.RandomInt(0, 5000), false, zombie);
 		zombieCurrentNumber++;
