@@ -9,15 +9,14 @@ modded class MissionServer
 	static int despawnDistance = 600;
 	static int despawnDistanceDeadBodies = 80;
 	static int deadBodyDespawnDelay = 30000;
-	static int despawnDelayCheckDistance = 5000;
-	
+	static int despawnDelayCheckDistanceZombToPlayer = 5000;
+	int checkStaticHordeDistanceDelay = 100;
+
 	static int zombieCurrentNumber;	
 	int numberOfInfectedZones;
 	string zombieTypeToSpawn;
 	vector zombiePositionToSpawn;
-	autoptr TBoolArray hordeSpawned = {false,false,false,};
 	float checkStaticHordeDistanceCount;
-	int checkStaticHordeDistanceDelay = 1;
 	int currentPlayerCheckedStaticHorde;
 	float playersUpdateCount;
 	int playersUpdateDelay;
@@ -29,61 +28,9 @@ modded class MissionServer
 	PlayerBase thePlayer2;
 	vector posPlayer2; 
 	
-
-	autoptr TFloatArray infectedZoneCoordX = {500,5000,10000};
-	autoptr TFloatArray infectedZoneCoordZ = {500,5000,10000};
-	autoptr TIntArray infectedZoneRadius = {100, 150, 200};	
+	autoptr TBoolArray hordeSpawned = {false,false,false,}; /// //////////////
 	
-	ref TStringArray infectedTypeLow = {
-		"ZmbF_MilkMaidOld_Beige",
-		"ZmbF_MilkMaidOld_Black",
-		"ZmbF_MilkMaidOld_Green",
-		"ZmbF_MilkMaidOld_Grey",
 
-		"ZmbM_FarmerFat_Beige",
-		"ZmbM_FarmerFat_Blue",
-		"ZmbM_FarmerFat_Brown",
-		"ZmbM_FarmerFat_Green",
-
-		"ZmbM_JournalistSkinny",
-
-		"ZmbF_JournalistNormal_Blue",
-		"ZmbF_JournalistNormal_Green",
-		"ZmbF_JournalistNormal_Red",
-		"ZmbF_JournalistNormal_White",
-
-		"ZmbM_JoggerSkinny_Blue",
-		"ZmbM_JoggerSkinny_Green",
-
-		"ZmbF_JoggerSkinny_Blue",
-		"ZmbF_JoggerSkinny_Brown",
-		"ZmbF_JoggerSkinny_Green",
-	};
-	ref TStringArray infectedTypeMedium = {
-		"ZmbM_ParamedicNormal_Blue",
-		"ZmbM_ParamedicNormal_Red",
-
-		"ZmbF_ParamedicNormal_Blue",
-		"ZmbF_ParamedicNormal_Red",
-	};
-	ref TStringArray infectedTypeHight = {
-		"ZmbM_SoldierHelmet",
-		"ZmbM_SoldierVest",
-		"ZmbM_SoldierVestHelmet",
-	};
-		
-	autoptr TIntArray infectedHightNumber = { 10, 5 , 30 };
-	autoptr TIntArray infectedMediumNumber = { 5, 10, 15 };
-	autoptr TIntArray infectedLowNumber = {20, 20, 40};
-
-	
-	override void OnInit()
-	{
-		super.OnInit();
-		//JSON();
-		numberOfInfectedZones = infectedZoneCoordX.Count();
-	}
-	
 	override void TickScheduler(float timeSplice)
 	{
 		super.TickScheduler(timeslice);
@@ -123,9 +70,10 @@ modded class MissionServer
 	{
 		for (int i = 0; i < numberOfInfectedZones; ++i)
 		{
-			vector coordCheck = {infectedZoneCoordX[i],0,infectedZoneCoordZ[i]};
+			vector coordCheck = {infectedZoneCoordX[i],infectedZoneCoordY[i],infectedZoneCoordZ[i]};
 			float distX = Math.AbsFloat(coordCheck[0] - thePosPlayer[0]);
 			float distZ = Math.AbsFloat(coordCheck[2] - thePosPlayer[2]);
+			
 			if (hordeSpawned[i] == false)
 			{
 				if (distX < infectedZoneRadius[i] * activationDistanceRatio && distZ < infectedZoneRadius[i] * activationDistanceRatio)
@@ -178,8 +126,6 @@ modded class MissionServer
 		}
 	}
 
-	
-
 	vector ChoosePositionZombie(vector the_Zone_Position, int the_spawned_Size)
 	{
 		vector thePosition = the_Zone_Position;
@@ -189,7 +135,6 @@ modded class MissionServer
 		thePosition[2] = the_Zone_Position[2] + decalZ;
 		return thePosition;
 	}	
-
 
 	string ChooseZombiesType(TStringArray in2_infectedType)
 	{
@@ -201,7 +146,7 @@ modded class MissionServer
 	void SpawnZombie(string theZombieTypeToSpawn, vector theZombiePositionToSpawn)
 	{
 		EntityAI zombie = GetGame().CreateObject(zombieTypeToSpawn, theZombiePositionToSpawn, false, true);
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(PvzRemoveZombie.CheckRemoveZombie, despawnDelayCheckDistance + Math.RandomInt(0, 5000), false, zombie);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(PvzRemoveZombie.CheckRemoveZombie, despawnDelayCheckDistanceZombToPlayer + Math.RandomInt(0, 5000), false, zombie);
 		zombieCurrentNumber++;
 	}
 
@@ -231,7 +176,132 @@ modded class MissionServer
 		}
 	}
 
+	autoptr TVectorArray infectedZoneCoord;
+
+	autoptr TFloatArray infectedZoneCoordX;
+	autoptr TFloatArray infectedZoneCoordY;
+	autoptr TFloatArray infectedZoneCoordZ;
+	autoptr TIntArray infectedZoneRadius;	
+	
+	ref TStringArray infectedTypeLow;
+	ref TStringArray infectedTypeMedium;
+	ref TStringArray infectedTypeHight;
+	
+	autoptr TIntArray infectedHightNumber;
+	autoptr TIntArray infectedMediumNumber;
+	autoptr TIntArray infectedLowNumber;
+	
+	ref HordeGetJsonData hordeGetJsonData;
+
+	override void OnInit()
+	{
+		super.OnInit();
+		hordeGetJsonData = new HordeGetJsonData();		
+		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/HordeCoordinates.json");
+		infectedZoneCoordX = hordeGetJsonData.GetDataCoord(0);
+		infectedZoneCoordY = hordeGetJsonData.GetDataCoord(1);
+		infectedZoneCoordZ = hordeGetJsonData.GetDataCoord(2);
+		
+		hordeGetJsonData = new HordeGetJsonData();
+		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/HordeSize.json");
+		infectedZoneRadius = hordeGetJsonData.GetDataInt();
+
+		hordeGetJsonData = new HordeGetJsonData();
+		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombiesNumberHight.json");
+		infectedHightNumber = hordeGetJsonData.GetDataInt();
+		
+		hordeGetJsonData = new HordeGetJsonData();
+		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombiesNumberMedium.json");
+		infectedMediumNumber = hordeGetJsonData.GetDataInt();
+		
+		hordeGetJsonData = new HordeGetJsonData();
+		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombiesNumberLow.json");
+		infectedLowNumber = hordeGetJsonData.GetDataInt();
+
+		hordeGetJsonData = new HordeGetJsonData();
+		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombieTypeHight.json");
+		infectedTypeHight = hordeGetJsonData.GetDataString();
+		
+		hordeGetJsonData = new HordeGetJsonData();
+		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombieTypeMedium.json");
+		infectedTypeMedium = hordeGetJsonData.GetDataString();
+		
+		hordeGetJsonData = new HordeGetJsonData();
+		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombieTypeLow.json");
+		infectedTypeLow = hordeGetJsonData.GetDataString();			
+		
+		numberOfInfectedZones = infectedZoneCoordX.Count();
+	}
+	
 }
+
+
+
+class HordeGetJsonData
+{
+	private ref map<string, int> dataJson;
+	private static autoptr TIntArray m_messages_int = {};
+	private static autoptr TFloatArray m_messages_float = {};
+	private static autoptr TStringArray m_messages_string = {};
+	bool init;
+
+	void Load(string fileToLoad)
+	{
+		if (FileExist(fileToLoad))
+		{
+			JsonFileLoader<HordeGetJsonData>.JsonLoadFile(fileToLoad, this);
+			m_messages_int = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //0-40
+			m_messages_float = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //0-40
+			m_messages_string = {"","",""}; /// problem si nombre de type différents entre hight/med/low
+			init = false;
+		}
+		else {Print("TestLiven JSON config file: " + fileToLoad + " not found");}
+	}
+
+	TFloatArray GetDataCoord(int a)
+	{		
+		if (dataJson.Count() > 0 && init == false)
+		{		
+			if (a == 2)
+				init = true;
+			for (int i = 0; i < dataJson.Count(); i++)
+			{
+				string _key = dataJson.GetKey(i);
+				m_messages_float[i] = _key.ToVector()[a];;
+			}
+		}
+		return m_messages_float;
+	}
+	
+	
+	TIntArray GetDataInt()
+	{		
+		if (dataJson.Count() > 0 && init == false)
+		{			
+			init = true;
+			for (int i = 0; i < dataJson.Count(); i++)
+			{
+				string _key = dataJson.GetKey(i);
+				m_messages_int[i] = dataJson.Get(_key);
+			}
+		}
+		return m_messages_int;
+	}
+	
+	TStringArray GetDataString()
+	{		
+		if (dataJson.Count() > 0 && init == false)
+		{			
+			init = true;
+			for (int i = 0; i < dataJson.Count(); i++)
+			{		
+				m_messages_string[i] = dataJson.GetKey(i);
+			}
+		}
+		return m_messages_string;
+	}
+}
+
 
 
 class PvzRemoveZombie
@@ -284,7 +354,7 @@ class PvzRemoveZombie
 			}
 			else if (deadBodyByDelay == false)
 			{
-				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(CheckRemoveZombie, MissionServer.despawnDelayCheckDistance, false, zomb);
+				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(CheckRemoveZombie, MissionServer.despawnDelayCheckDistanceZombToPlayer, false, zomb);
 			}
 		}
 	}
@@ -299,46 +369,3 @@ class PvzRemoveZombie
 	}
 }
 
-/*
-
-class EvocatusRadiationZones
-{
-    static const string m_EvocatusRadiationZonesJSON = "$profile:Sync/config/radiationzones.json";
-    
-    private ref map<string, float> positions_radius;
-    
-    // read from json
-    void Load()    
-    {
-        if(FileExist(m_EvocatusRadiationZonesJSON))
-        {
-            JsonFileLoader<EvocatusRadiationZones>.JsonLoadFile(m_EvocatusRadiationZonesJSON, this);
-        }
-        else
-        {
-            Print("JSON config file: " + m_EvocatusRadiationZonesJSON + " not found" );
-        }
-    }
-    
-    ref map<string, float> Get()
-    {
-        return positions_radius;
-    }
-    
-    // check if player is in a zone
-    
-    // update HUD on enter/exit zone
-}
-
-for(int k = 0; k < m_RadiationZonesPositions.Count(); k++)
-{
-	string _key = m_RadiationZonesPositions.GetKey(k);
-	RadiationZone_epicentrum = _key.ToVector();
-	RadiationZone_radius = m_RadiationZonesPositions.Get(_key);
-	
-	if(vector.Distance(player.GetPosition(), RadiationZone_epicentrum) <= RadiationZone_radius)
-		IsInRadiationZone = true;
-}
-_key.ToVector();
-
-*/
