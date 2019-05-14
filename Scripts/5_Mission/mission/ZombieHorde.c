@@ -28,7 +28,7 @@ modded class MissionServer
 	PlayerBase thePlayer2;
 	vector posPlayer2; 
 	
-	autoptr TBoolArray hordeSpawned = {false,false,false,}; /// //////////////
+	autoptr TBoolArray hordeSpawned = {false,false,false,}; /// ////////////// A GENERER DYNAMIQUEMENT
 	
 
 	override void TickScheduler(float timeSplice)
@@ -250,9 +250,9 @@ class HordeGetJsonData
 		if (FileExist(fileToLoad))
 		{
 			JsonFileLoader<HordeGetJsonData>.JsonLoadFile(fileToLoad, this);
-			m_messages_int = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //0-40
-			m_messages_float = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //0-40
-			m_messages_string = {"","",""}; /// problem si nombre de type différents entre hight/med/low
+			m_messages_int = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  /// ////////////// A GENERER DYNAMIQUEMENT
+			m_messages_float = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; /// ////////////// A GENERER DYNAMIQUEMENT
+			m_messages_string = {"","",""}; /// problem si nombre de type différents entre hight/med/low /// ////////////// A GENERER DYNAMIQUEMENT
 			init = false;
 		}
 		else {Print("TestLiven JSON config file: " + fileToLoad + " not found");}
