@@ -1,16 +1,17 @@
 modded class MissionServer
 {
-	float activationDistanceRatio = 2;
-	float desactivationDistanceRatio = 2.3;
+	int spawnDistance = 100;
+	float reactivationDistanceRatio = 1.5;
+	float despawnDistanceRatio = 1.5;
 	
 	float mediumRadiusRatio = 0.5;
 	float hightRadiusRation = 0.2;
 	
-	static int despawnDistance = 600;
+	static int despawnDistance;
 	static int despawnDistanceDeadBodies = 80;
 	static int deadBodyDespawnDelay = 30000;
 	static int despawnDelayCheckDistanceZombToPlayer = 5000;
-	int checkStaticHordeDistanceDelay = 100;
+	int checkStaticHordeDistanceDelay = 1000; ///100
 
 	static int zombieCurrentNumber;	
 	int numberOfInfectedZones;
@@ -28,7 +29,7 @@ modded class MissionServer
 	PlayerBase thePlayer2;
 	vector posPlayer2; 
 	
-	autoptr TBoolArray hordeSpawned = {false,false,false,}; /// ////////////// A GENERER DYNAMIQUEMENT
+	autoptr TBoolArray hordeSpawned = {false,false,false,false,}; /// ////////////// A GENERER DYNAMIQUEMENT
 	
 
 	override void TickScheduler(float timeSplice)
@@ -76,13 +77,19 @@ modded class MissionServer
 			
 			if (hordeSpawned[i] == false)
 			{
-				if (distX < infectedZoneRadius[i] * activationDistanceRatio && distZ < infectedZoneRadius[i] * activationDistanceRatio)
+				//RPC_MESSAGE("distX : " + distX.ToString());
+				//RPC_MESSAGE("distZ : " + distZ.ToString());
+				//RPC_MESSAGE("Distance : " + (infectedZoneRadius[i] + spawnDistance).ToString());
+				//RPC_MESSAGE("infectedZoneRadius : " + (infectedZoneRadius[i]).ToString());
+				//RPC_MESSAGE("spawnDistance : " + (spawnDistance).ToString());
+
+				if (distX < infectedZoneRadius[i] + spawnDistance && distZ < infectedZoneRadius[i] + spawnDistance)
 				{					
 					SpawnGroupe (coordCheck, infectedTypeHight, infectedHightNumber[i], infectedZoneRadius[i], hightRadiusRation);
 					SpawnGroupe (coordCheck, infectedTypeMedium, infectedMediumNumber[i], infectedZoneRadius[i], mediumRadiusRatio);
 					SpawnGroupe (coordCheck, infectedTypeLow, infectedLowNumber[i], infectedZoneRadius[i], 1);
 					hordeSpawned[i] = true;
-					RPC_MESSAGE("Static Horde Spawned : " + (infectedHightNumber[i] + infectedMediumNumber[i] + infectedLowNumber[i]).ToString());
+					RPC_MESSAGE("Static Horde Spawned : " + (infectedHightNumber[i] + infectedMediumNumber[i] + infectedLowNumber[i]).ToString() + " (num" + i.ToStrong() + ")");
 					RPC_MESSAGE("zombieCurrentNumber : " + zombieCurrentNumber.ToString());
 					break;
 				}	
@@ -100,7 +107,7 @@ modded class MissionServer
 						float distX2 = Math.AbsFloat(coordCheck2[0] - posPlayer2[0]);
 						float distZ2 = Math.AbsFloat(coordCheck2[2] - posPlayer2[2]);						
 											
-						if (distX2 < infectedZoneRadius[i] * desactivationDistanceRatio && distZ2 < infectedZoneRadius[i] * desactivationDistanceRatio)
+						if (distX2 < (infectedZoneRadius[i] + spawnDistance) * reactivationDistanceRatio && distZ2 < (infectedZoneRadius[i] + spawnDistance) * reactivationDistanceRatio)
 						{
 							readyToRespawn = false;
 							break;
@@ -110,7 +117,7 @@ modded class MissionServer
 				if (readyToRespawn == true)
 				{						
 					hordeSpawned[i] = false;
-					RPC_MESSAGE("Static Horde Ready to Spawn again");
+					RPC_MESSAGE("Static Horde Ready to Spawn again" + " (num" + i.ToString() + ")");
 				}				
 			}
 		}
@@ -196,36 +203,62 @@ modded class MissionServer
 	override void OnInit()
 	{
 		super.OnInit();
-		hordeGetJsonData = new HordeGetJsonData();		
-		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/HordeCoordinates.json");
-		infectedZoneCoordX = hordeGetJsonData.GetDataCoord(0);
-		infectedZoneCoordY = hordeGetJsonData.GetDataCoord(1);
-		infectedZoneCoordZ = hordeGetJsonData.GetDataCoord(2);
+		//Print("TestLiven infectedZoneCoordX");		
+		hordeGetJsonData = new HordeGetJsonData();	
+		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/HordeCoordinatesX.json");
+		infectedZoneCoordX = hordeGetJsonData.GetDataFloat();
 		
+		//Print("TestLiven infectedZoneCoodY");
+		hordeGetJsonData = new HordeGetJsonData();	
+		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/HordeCoordinatesY.json");
+		infectedZoneCoordY = hordeGetJsonData.GetDataFloat();
+		
+		//Print("TestLiven infectedZoneCoordZ");
+		hordeGetJsonData = new HordeGetJsonData();	
+		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/HordeCoordinatesZ.json");
+		infectedZoneCoordZ = hordeGetJsonData.GetDataFloat();
+		
+		//Print("TestLiven infectedZoneRadius");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/HordeSize.json");
 		infectedZoneRadius = hordeGetJsonData.GetDataInt();
+		
+		int maxDist = 0;
+		for (int i = 0; i < infectedZoneRadius.Count(); i++)
+		{
+			if (infectedZoneRadius[i] > maxDist)
+				maxDist = infectedZoneRadius[i];
+		}
+		
+		despawnDistance = (maxDist + spawnDistance) * despawnDistanceRatio;
+		//Print("TestLiven despawnDistance : " + despawnDistance.ToString());
 
+		//Print("TestLiven infectedHightNumber");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombiesNumberHight.json");
 		infectedHightNumber = hordeGetJsonData.GetDataInt();
 		
+		//Print("TestLiven infectedMediumNumber");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombiesNumberMedium.json");
 		infectedMediumNumber = hordeGetJsonData.GetDataInt();
 		
+		//Print("TestLiven infectedLowNumber");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombiesNumberLow.json");
 		infectedLowNumber = hordeGetJsonData.GetDataInt();
 
+		//Print("TestLiven infectedTypeHight");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombieTypeHight.json");
 		infectedTypeHight = hordeGetJsonData.GetDataString();
 		
+		//Print("TestLiven infectedTypeMedium");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombieTypeMedium.json");
 		infectedTypeMedium = hordeGetJsonData.GetDataString();
 		
+		//Print("TestLiven infectedTypeLow");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombieTypeLow.json");
 		infectedTypeLow = hordeGetJsonData.GetDataString();			
@@ -252,28 +285,27 @@ class HordeGetJsonData
 			JsonFileLoader<HordeGetJsonData>.JsonLoadFile(fileToLoad, this);
 			m_messages_int = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  /// ////////////// A GENERER DYNAMIQUEMENT
 			m_messages_float = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; /// ////////////// A GENERER DYNAMIQUEMENT
-			m_messages_string = {"","",""}; /// problem si nombre de type différents entre hight/med/low /// ////////////// A GENERER DYNAMIQUEMENT
+			m_messages_string = {"","","",""}; /// problem si nombre de type différents entre hight/med/low /// ////////////// A GENERER DYNAMIQUEMENT
 			init = false;
 		}
 		else {Print("TestLiven JSON config file: " + fileToLoad + " not found");}
 	}
-
-	TFloatArray GetDataCoord(int a)
+	
+	TFloatArray GetDataFloat()
 	{		
 		if (dataJson.Count() > 0 && init == false)
-		{		
-			if (a == 2)
-				init = true;
+		{			
+			init = true;
 			for (int i = 0; i < dataJson.Count(); i++)
 			{
 				string _key = dataJson.GetKey(i);
-				m_messages_float[i] = _key.ToVector()[a];;
+				m_messages_float[i] = dataJson.Get(_key);
+				Print("TestLiven : " + m_messages_float[i].ToString());
 			}
 		}
 		return m_messages_float;
 	}
-	
-	
+		
 	TIntArray GetDataInt()
 	{		
 		if (dataJson.Count() > 0 && init == false)
@@ -283,6 +315,7 @@ class HordeGetJsonData
 			{
 				string _key = dataJson.GetKey(i);
 				m_messages_int[i] = dataJson.Get(_key);
+				Print("TestLiven : " + m_messages_int[i].ToString());
 			}
 		}
 		return m_messages_int;
@@ -296,6 +329,7 @@ class HordeGetJsonData
 			for (int i = 0; i < dataJson.Count(); i++)
 			{		
 				m_messages_string[i] = dataJson.GetKey(i);
+				Print("TestLiven : " + m_messages_string[i]);
 			}
 		}
 		return m_messages_string;
