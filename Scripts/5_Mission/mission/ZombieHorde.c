@@ -11,7 +11,7 @@ modded class MissionServer
 	static int despawnDistanceDeadBodies = 80;
 	static int deadBodyDespawnDelay = 30000;
 	static int despawnDelayCheckDistanceZombToPlayer = 5000;
-	int checkStaticHordeDistanceDelay = 1000; ///100
+	int checkStaticHordeDistanceDelay = 100;
 
 	static int zombieCurrentNumber;	
 	int numberOfInfectedZones;
@@ -89,7 +89,7 @@ modded class MissionServer
 					SpawnGroupe (coordCheck, infectedTypeMedium, infectedMediumNumber[i], infectedZoneRadius[i], mediumRadiusRatio);
 					SpawnGroupe (coordCheck, infectedTypeLow, infectedLowNumber[i], infectedZoneRadius[i], 1);
 					hordeSpawned[i] = true;
-					RPC_MESSAGE("Static Horde Spawned : " + (infectedHightNumber[i] + infectedMediumNumber[i] + infectedLowNumber[i]).ToString() + " (num" + i.ToStrong() + ")");
+					RPC_MESSAGE("Static Horde Spawned : " + (infectedHightNumber[i] + infectedMediumNumber[i] + infectedLowNumber[i]).ToString() + " (num" + i.ToString() + ")");
 					RPC_MESSAGE("zombieCurrentNumber : " + zombieCurrentNumber.ToString());
 					break;
 				}	
@@ -107,7 +107,7 @@ modded class MissionServer
 						float distX2 = Math.AbsFloat(coordCheck2[0] - posPlayer2[0]);
 						float distZ2 = Math.AbsFloat(coordCheck2[2] - posPlayer2[2]);						
 											
-						if (distX2 < (infectedZoneRadius[i] + spawnDistance) * reactivationDistanceRatio && distZ2 < (infectedZoneRadius[i] + spawnDistance) * reactivationDistanceRatio)
+						if (distX2 < infectedZoneRadius[i] + (spawnDistance * reactivationDistanceRatio) && distZ2 < infectedZoneRadius[i] + (spawnDistance * reactivationDistanceRatio))
 						{
 							readyToRespawn = false;
 							break;
