@@ -1,7 +1,8 @@
 {
 	"dataJson": {
-		"HordeNum01": 5,
-		"HordeNum02": 10,
-		"HordeNum03": 13
+		"0": 5,
+		"1": 10,
+		"2": 5,
+		"3": 30
 	}
 }
