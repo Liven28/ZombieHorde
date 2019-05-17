@@ -8,9 +8,7 @@ modded class MissionServer
 	float hightRadiusRation = 0.2;
 	
 	static int despawnDistance;
-	static int despawnDistanceDeadBodies = 80;
-	static int deadBodyDespawnDelay = 30000;
-	static int despawnDelayCheckDistanceZombToPlayer = 5000;
+	static int despawnDelayCheckDistanceZombToPlayer = 10000;
 	int checkStaticHordeDistanceDelay = 100;
 
 	static int zombieCurrentNumber;	
@@ -300,7 +298,7 @@ class HordeGetJsonData
 			{
 				string _key = dataJson.GetKey(i);
 				m_messages_float[i] = dataJson.Get(_key);
-				Print("TestLiven : " + m_messages_float[i].ToString());
+				//Print("TestLiven : " + m_messages_float[i].ToString());
 			}
 		}
 		return m_messages_float;
@@ -315,7 +313,7 @@ class HordeGetJsonData
 			{
 				string _key = dataJson.GetKey(i);
 				m_messages_int[i] = dataJson.Get(_key);
-				Print("TestLiven : " + m_messages_int[i].ToString());
+				//Print("TestLiven : " + m_messages_int[i].ToString());
 			}
 		}
 		return m_messages_int;
@@ -329,7 +327,7 @@ class HordeGetJsonData
 			for (int i = 0; i < dataJson.Count(); i++)
 			{		
 				m_messages_string[i] = dataJson.GetKey(i);
-				Print("TestLiven : " + m_messages_string[i]);
+				//Print("TestLiven : " + m_messages_string[i]);
 			}
 		}
 		return m_messages_string;
@@ -344,9 +342,10 @@ class PvzRemoveZombie
 	{
 		if (zomb != null)
 		{
-			bool zombRemovable = true;
+			bool killZombie = true;
 			bool deadBodyByDelay = false;
 			vector posZombie = zomb.GetPosition();
+			bool updateDone = false;
 
 			for (int k = 0; k < MissionServer.playerCount; ++k)
 			{
@@ -362,44 +361,33 @@ class PvzRemoveZombie
 					{
 						if (distX < MissionServer.despawnDistance && distZ < MissionServer.despawnDistance)
 						{
-							zombRemovable = false;							
+							killZombie = false;							
 						}	
 					}
 					else
 					{
-						int checkNum = Math.Min (MissionServer.despawnDistance, MissionServer.despawnDistanceDeadBodies); 
-						if (distX < checkNum && distZ < checkNum)
-						{
-							zombRemovable = false;		
-							if (MissionServer.deadBodyDespawnDelay != 0)
-							{
-								GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DeleteZombieBody, MissionServer.deadBodyDespawnDelay, false, zomb);		
-								deadBodyByDelay	= true;							
-							}
-						}							
+						killZombie = false;							
+						GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UpdateZombieCurrentNumber, 120000, false, zomb);
+						updateDone = true;
 					}
 				}						
 			}
 
-			if (zombRemovable == true)
+			if (killZombie == true)
 			{			
 				zomb.SetHealth("", "", 0);
-				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DeleteZombieBody, 5000, false, zomb);
+				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UpdateZombieCurrentNumber, 15000, false, zomb);
 			}
-			else if (deadBodyByDelay == false)
+			else if (updateDone == false)
 			{
 				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(CheckRemoveZombie, MissionServer.despawnDelayCheckDistanceZombToPlayer, false, zomb);
 			}
 		}
 	}
 
-	static void DeleteZombieBody(EntityAI zomb2)
+	static void UpdateZombieCurrentNumber()
 	{
-		if (zomb2 != null)
-		{
-			GetGame().ObjectDelete(zomb2);	
-			MissionServer.zombieCurrentNumber--;
-		}
+		MissionServer.zombieCurrentNumber--;
 	}
 }
 
