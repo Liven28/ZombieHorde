@@ -27,7 +27,7 @@ modded class MissionServer
 	PlayerBase thePlayer2;
 	vector posPlayer2; 
 	
-	autoptr TBoolArray hordeSpawned = {false,false,false,false,}; /// ////////////// A GENERER DYNAMIQUEMENT
+	autoptr TBoolArray hordeSpawned = {};
 	
 
 	override void TickScheduler(float timeSplice)
@@ -205,21 +205,25 @@ modded class MissionServer
 		hordeGetJsonData = new HordeGetJsonData();	
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/HordeCoordinatesX.json");
 		infectedZoneCoordX = hordeGetJsonData.GetDataFloat();
+		delete hordeGetJsonData;
 		
 		//Print("TestLiven infectedZoneCoodY");
 		hordeGetJsonData = new HordeGetJsonData();	
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/HordeCoordinatesY.json");
 		infectedZoneCoordY = hordeGetJsonData.GetDataFloat();
+		delete hordeGetJsonData;
 		
 		//Print("TestLiven infectedZoneCoordZ");
 		hordeGetJsonData = new HordeGetJsonData();	
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/HordeCoordinatesZ.json");
 		infectedZoneCoordZ = hordeGetJsonData.GetDataFloat();
+		delete hordeGetJsonData;
 		
 		//Print("TestLiven infectedZoneRadius");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/HordeSize.json");
 		infectedZoneRadius = hordeGetJsonData.GetDataInt();
+		delete hordeGetJsonData;
 		
 		int maxDist = 0;
 		for (int i = 0; i < infectedZoneRadius.Count(); i++)
@@ -235,31 +239,43 @@ modded class MissionServer
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombiesNumberHight.json");
 		infectedHightNumber = hordeGetJsonData.GetDataInt();
+		delete hordeGetJsonData;
 		
 		//Print("TestLiven infectedMediumNumber");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombiesNumberMedium.json");
 		infectedMediumNumber = hordeGetJsonData.GetDataInt();
+		delete hordeGetJsonData;
 		
 		//Print("TestLiven infectedLowNumber");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombiesNumberLow.json");
 		infectedLowNumber = hordeGetJsonData.GetDataInt();
-
+		delete hordeGetJsonData;
+		
 		//Print("TestLiven infectedTypeHight");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombieTypeHight.json");
 		infectedTypeHight = hordeGetJsonData.GetDataString();
+		delete hordeGetJsonData;
 		
 		//Print("TestLiven infectedTypeMedium");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombieTypeMedium.json");
 		infectedTypeMedium = hordeGetJsonData.GetDataString();
+		delete hordeGetJsonData;
 		
 		//Print("TestLiven infectedTypeLow");
 		hordeGetJsonData = new HordeGetJsonData();
 		hordeGetJsonData.Load("$profile:/ZombieHordeProfile/ZombieTypeLow.json");
 		infectedTypeLow = hordeGetJsonData.GetDataString();			
+		delete hordeGetJsonData;
+		
+		hordeSpawned = {};
+		for (int j = 0; j < infectedZoneCoordX.Count(); j++)
+		{
+			hordeSpawned.Insert(false);
+		}
 		
 		numberOfInfectedZones = infectedZoneCoordX.Count();
 	}
@@ -281,9 +297,18 @@ class HordeGetJsonData
 		if (FileExist(fileToLoad))
 		{
 			JsonFileLoader<HordeGetJsonData>.JsonLoadFile(fileToLoad, this);
-			m_messages_int = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  /// ////////////// A GENERER DYNAMIQUEMENT
-			m_messages_float = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; /// ////////////// A GENERER DYNAMIQUEMENT
-			m_messages_string = {"","","",""}; /// problem si nombre de type différents entre hight/med/low /// ////////////// A GENERER DYNAMIQUEMENT
+			
+			m_messages_int = {};
+			m_messages_float = {};
+			m_messages_string = {};
+			for (int i = 0; i < dataJson.Count(); i++)
+			{
+				m_messages_int.Insert(0);
+				m_messages_float.Insert(0);
+				m_messages_string.Insert("");
+			}
+			
+			
 			init = false;
 		}
 		else {Print("TestLiven JSON config file: " + fileToLoad + " not found");}
