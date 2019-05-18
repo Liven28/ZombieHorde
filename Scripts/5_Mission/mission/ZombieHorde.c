@@ -400,8 +400,10 @@ class PvzRemoveZombie
 
 			if (killZombie == true)
 			{			
-				zomb.SetHealth("", "", 0);
-				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UpdateZombieCurrentNumber, 15000, false, zomb);
+				GetGame().ObjectDelete(zomb); 
+				UpdateZombieCurrentNumber();				
+				//zomb.SetHealth("", "", 0);
+				//GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UpdateZombieCurrentNumber, 15000, false, zomb);
 			}
 			else if (updateDone == false)
 			{
